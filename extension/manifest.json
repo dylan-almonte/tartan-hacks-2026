@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "NudgePay Extension",
+  "version": "0.1.0",
+  "description": "Receives dashboard sync payloads and stores them in chrome.storage.local.",
+  "permissions": ["storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "NudgePay",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": [
+    "https://www.amazon.com/*",
+    "https://*.amazon.com/*",
+    "https://www.ubereats.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.amazon.com/checkout/*", "https://*.amazon.com/checkout/*"],
+      "js": ["amazon.js"]
+    },
+    {
+      "matches": ["https://www.ubereats.com/checkout*"],
+      "js": ["ubereats.js"]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:5173/*",
+      "http://127.0.0.1:5173/*"
+    ]
+  }
+}

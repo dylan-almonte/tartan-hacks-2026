@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NudgePay</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="card">
+      <header>
+        <div>
+          <p class="eyebrow">NudgePay</p>
+          <h1>Checkout Monitor</h1>
+        </div>
+        <div class="badge" id="vendorBadge">No checkout</div>
+      </header>
+
+      <section class="summary">
+        <div>
+          <p class="label">Detected total</p>
+          <h2 id="detectedTotal">--</h2>
+        </div>
+        <div>
+          <p class="label">Monthly budget</p>
+          <h2 id="monthlyBudget">$0.00</h2>
+        </div>
+        <div>
+          <p class="label">Predicted balance</p>
+          <h2 id="predictedBalance">$0.00</h2>
+        </div>
+      </section>
+
+      <p class="status" id="statusMessage">Open an Amazon or Uber Eats checkout page to see the live warning.</p>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

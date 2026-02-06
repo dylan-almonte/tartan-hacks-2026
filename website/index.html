@@ -7,14 +7,33 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="mosaic-backdrop" aria-hidden="true"></div>
     <div class="page">
       <header class="hero">
-        <div>
+        <div class="hero-copy">
           <p class="eyebrow">NudgePay: Final Word</p>
           <h1>Fun Money Dashboard</h1>
           <p class="subtitle">Set your monthly budget and recurring payments. Syncs to your extension when ready.</p>
         </div>
-        <div class="status" id="syncStatus">Not synced</div>
+        <div class="hero-side">
+          <div class="status" id="syncStatus">Not synced</div>
+          <div class="mosaic-panel" aria-hidden="true">
+            <div class="mosaic-tiles">
+              <span class="tile t1"></span>
+              <span class="tile t2"></span>
+              <span class="tile t3"></span>
+              <span class="tile t4"></span>
+              <span class="tile t5"></span>
+              <span class="tile t6"></span>
+              <span class="tile t2"></span>
+              <span class="tile t3"></span>
+              <span class="tile t4"></span>
+              <span class="tile t5"></span>
+              <span class="tile t6"></span>
+              <span class="tile t1"></span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <main class="grid">
