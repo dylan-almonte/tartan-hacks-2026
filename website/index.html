@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NudgePay Dashboard</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">NudgePay: Final Word</p>
+          <h1>Fun Money Dashboard</h1>
+          <p class="subtitle">Set your monthly budget and recurring payments. Syncs to your extension when ready.</p>
+        </div>
+        <div class="status" id="syncStatus">Not synced</div>
+      </header>
+
+      <main class="grid">
+        <section class="card">
+          <h2>Monthly Budget</h2>
+          <form id="budgetForm" class="form">
+            <label>
+              Total monthly budget
+              <input type="number" id="budgetAmount" min="0" step="0.01" placeholder="1200.00" required />
+            </label>
+            <label>
+              Currency
+              <select id="budgetCurrency">
+                <option value="USD">USD</option>
+                <option value="EUR">EUR</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </label>
+            <button type="submit" class="primary">Save Budget</button>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Recurring Payments</h2>
+          <form id="recurringForm" class="form">
+            <label>
+              Vendor
+              <input type="text" id="vendor" placeholder="Netflix" required />
+            </label>
+            <label>
+              Amount
+              <input type="number" id="amount" min="0" step="0.01" placeholder="15.99" required />
+            </label>
+            <label>
+              Category
+              <input type="text" id="category" placeholder="Entertainment" required />
+            </label>
+            <div class="form-row">
+              <label>
+                Frequency
+                <select id="frequency">
+                  <option value="monthly">monthly</option>
+                  <option value="weekly">weekly</option>
+                  <option value="yearly">yearly</option>
+                </select>
+              </label>
+              <label>
+                Billing day
+                <input type="number" id="billingDay" min="1" max="31" placeholder="12" required />
+              </label>
+            </div>
+            <label>
+              Type
+              <select id="type">
+                <option value="Fixed">Fixed</option>
+                <option value="Variable">Variable</option>
+              </select>
+            </label>
+            <button type="submit" class="primary">Add Payment</button>
+          </form>
+
+          <div class="list" id="paymentsList"></div>
+        </section>
+
+        <section class="card full">
+          <h2>Sync</h2>
+          <p class="muted">This sends the canonical schema to the extension so it can store data in <strong>chrome.storage.local</strong>.</p>
+          <div class="actions">
+            <button id="syncButton" class="primary">Send to Extension</button>
+            <button id="resetButton" class="secondary">Reset Local Draft</button>
+          </div>
+          <pre id="payloadPreview" class="payload"></pre>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
