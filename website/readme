@@ -1,0 +1,14 @@
+NudgePay Dashboard
+
+Open index.html in a browser to set the monthly budget and recurring payments.
+Use the "Send to Extension" button to post the canonical schema to the Chrome
+extension via chrome.runtime.sendMessage.
+
+TODO: Replace TODO_EXTENSION_ID in app.js with the real extension id.
+
+Local dev
+1) cd website
+2) npm install
+3) npm run dev
+
+This starts a local server at http://localhost:5173.
