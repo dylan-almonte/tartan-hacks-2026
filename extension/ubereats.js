@@ -13,6 +13,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 bootstrapBanner();
 
 function findUberEatsTotal() {
+  const breakdownTotal = findBreakdownTotal();
+  if (breakdownTotal !== null) {
+    return breakdownTotal;
+  }
+
   const fareTotal = findFareBreakdownTotal();
   if (fareTotal !== null) {
     return fareTotal;
@@ -31,6 +36,28 @@ function findUberEatsTotal() {
       const priceMatch = match[0].match(/\$\s?[\d,.]+/);
       if (priceMatch) return parseMoney(priceMatch[0]);
     }
+  }
+
+  return null;
+}
+
+function findBreakdownTotal() {
+  const breakdown = document.querySelector('[data-test="fare-breakdown"]');
+  if (!breakdown) return null;
+
+  const totalLabel = breakdown.querySelector('[data-testid="fare-breakdown-total-label"]');
+  if (!totalLabel) return null;
+
+  const row = totalLabel.closest("div");
+  if (row) {
+    const rowMatch = row.textContent.match(/\$\s?[\d,.]+/);
+    if (rowMatch) return parseMoney(rowMatch[0]);
+  }
+
+  const textMatch = breakdown.textContent.match(/Total[^$]*\$\s?[\d,.]+/i);
+  if (textMatch) {
+    const priceMatch = textMatch[0].match(/\$\s?[\d,.]+/);
+    if (priceMatch) return parseMoney(priceMatch[0]);
   }
 
   return null;
