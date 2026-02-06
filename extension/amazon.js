@@ -1,4 +1,5 @@
 const AMAZON_VENDOR = "Amazon";
+const BANNER_ID = "nudgepay-banner";
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== "NUDGEPAY_GET_TOTAL") {
@@ -8,6 +9,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   const total = findAmazonTotal();
   sendResponse({ vendor: AMAZON_VENDOR, total });
 });
+
+bootstrapBanner();
 
 function findAmazonTotal() {
   const labelTotal = findTotalByLabel("order total");
@@ -59,4 +62,80 @@ function parseMoney(text) {
   const value = Number(cleaned);
   if (Number.isNaN(value)) return null;
   return Number(value.toFixed(2));
+}
+
+function bootstrapBanner() {
+  const observer = new MutationObserver(() => {
+    const total = findAmazonTotal();
+    if (total === null) return;
+    updateBanner(total);
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  const initial = findAmazonTotal();
+  if (initial !== null) {
+    updateBanner(initial);
+  }
+}
+
+function updateBanner(total) {
+  chrome.storage.local.get(["user_profile"], (result) => {
+    const budget = Number(result?.user_profile?.total_monthly_budget || 0);
+    const predicted = Number((budget - total).toFixed(2));
+    const banner = ensureBanner();
+    banner.querySelector(".nudgepay-total").textContent = formatMoney(total);
+    banner.querySelector(".nudgepay-budget").textContent = formatMoney(budget);
+    banner.querySelector(".nudgepay-predicted").textContent = formatMoney(predicted);
+  });
+}
+
+function ensureBanner() {
+  let banner = document.getElementById(BANNER_ID);
+  if (banner) return banner;
+
+  banner = document.createElement("div");
+  banner.id = BANNER_ID;
+  banner.innerHTML = `
+    <div class="nudgepay-card">
+      <strong>NudgePay warning</strong>
+      <div>Total: <span class="nudgepay-total">--</span></div>
+      <div>Budget: <span class="nudgepay-budget">--</span></div>
+      <div>Predicted: <span class="nudgepay-predicted">--</span></div>
+    </div>
+  `;
+
+  const style = document.createElement("style");
+  style.textContent = `
+    #${BANNER_ID} {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 99999;
+      font-family: "Inter", "Segoe UI", sans-serif;
+    }
+    #${BANNER_ID} .nudgepay-card {
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(46, 143, 127, 0.3);
+      padding: 12px 14px;
+      border-radius: 12px;
+      box-shadow: 0 10px 24px rgba(14, 36, 32, 0.18);
+      color: #0d2320;
+      font-size: 12px;
+      line-height: 1.4;
+      min-width: 180px;
+    }
+    #${BANNER_ID} strong {
+      display: block;
+      margin-bottom: 6px;
+    }
+  `;
+
+  document.documentElement.appendChild(style);
+  document.documentElement.appendChild(banner);
+  return banner;
+}
+
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`;
 }

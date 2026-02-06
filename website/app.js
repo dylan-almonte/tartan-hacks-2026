@@ -1,4 +1,4 @@
-const EXTENSION_ID = "TODO_EXTENSION_ID"; // TODO: replace with the real extension id
+const EXTENSION_ID = "oifcpgkjdijdijbbbikjpdeehnflkand"; // TODO: replace with the real extension id
 
 const STATE_KEY = "nudgepay_dashboard_state";
 
