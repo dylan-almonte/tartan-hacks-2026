@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NudgePay Analytics</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="mosaic-backdrop" aria-hidden="true">
+      <div class="liquid-grid"></div>
+      <div class="shard-layer" id="shardLayer"></div>
+      <div class="bubble-layer" id="bubbleLayer"></div>
+    </div>
+    <div class="page">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">NudgePay: Analytics</p>
+          <h1>Spending Analytics</h1>
+          <p class="subtitle">Visualize your spending by month and category. Filter to find exactly what you need.</p>
+        </div>
+        <div class="hero-side">
+          <a href="index.html" class="nav-link">Back to Dashboard</a>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="card full">
+          <h2>Filters</h2>
+          <div class="filter-bar">
+            <label>
+              Category
+              <select id="filterCategory">
+                <option value="">All Categories</option>
+              </select>
+            </label>
+            <label>
+              Month
+              <input type="month" id="filterMonth" />
+            </label>
+            <label>
+              From
+              <input type="date" id="filterFrom" />
+            </label>
+            <label>
+              To
+              <input type="date" id="filterTo" />
+            </label>
+            <label>
+              Vendor
+              <input type="text" id="filterVendor" placeholder="Search vendor..." />
+            </label>
+            <div class="filter-actions">
+              <button id="applyFilters" class="primary">Apply</button>
+              <button id="clearFilters" class="secondary">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Summary metrics row -->
+        <section class="card full">
+          <h2>Overview</h2>
+          <div class="metrics-grid" id="metricsGrid"></div>
+        </section>
+
+        <section class="card full">
+          <h2>Daily Spending</h2>
+          <p class="muted" id="dailyChartSubtitle">Stacked by category across the selected month</p>
+          <div class="chart-container chart-tall">
+            <canvas id="dailyChart"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Spending by Category</h2>
+          <div class="chart-container chart-square">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Category Breakdown</h2>
+          <div class="list" id="categoryList"></div>
+          <div class="stat-row" id="totalSpend"></div>
+        </section>
+
+        <section class="card">
+          <h2>Top Vendors</h2>
+          <div class="chart-container chart-square">
+            <canvas id="vendorChart"></canvas>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Fixed vs Variable</h2>
+          <div class="chart-container chart-square">
+            <canvas id="typeChart"></canvas>
+          </div>
+        </section>
+
+        <section class="card full">
+          <h2>Transactions</h2>
+          <div class="table-wrap">
+            <table class="txn-table" id="txnTable">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Vendor</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                  <th>Type</th>
+                </tr>
+              </thead>
+              <tbody id="txnBody"></tbody>
+            </table>
+          </div>
+          <p class="muted" id="txnCount"></p>
+        </section>
+
+        <section class="card full">
+          <div class="actions">
+            <button id="generateDemo" class="secondary">Generate Demo Transactions</button>
+            <button id="clearLedger" class="secondary">Clear Ledger</button>
+          </div>
+          <p class="muted" id="demoStatus"></p>
+        </section>
+      </main>
+    </div>
+
+    <script src="analytics.js"></script>
+  </body>
+</html>
