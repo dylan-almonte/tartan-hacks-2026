@@ -132,8 +132,12 @@ function renderState() {
   els.budgetAmount.value = state.user_profile.total_monthly_budget || "";
   els.budgetCurrency.value = state.user_profile.currency || "USD";
 
+  recomputeRemainingBudget();
   if (els.budgetRemaining) {
-    els.budgetRemaining.textContent = formatMoney(state.user_profile.remaining_monthly_budget);
+    const remaining = Number(state.user_profile.remaining_monthly_budget || 0);
+    els.budgetRemaining.textContent = formatMoney(remaining);
+    els.budgetRemaining.classList.toggle("budget-positive", remaining >= 0);
+    els.budgetRemaining.classList.toggle("budget-negative", remaining < 0);
   }
 
   els.paymentsList.innerHTML = "";
@@ -278,12 +282,7 @@ function initExtensionUpdates() {
         status: "confirmed",
       };
       state.ledger = [ledgerEntry, ...(state.ledger || [])];
-      if (state.user_profile.remaining_monthly_budget !== undefined) {
-        const nextRemaining = Math.max(0, Number(state.user_profile.remaining_monthly_budget || 0) - amount);
-        state.user_profile.remaining_monthly_budget = Number(nextRemaining.toFixed(2));
-        persistState();
-        renderState();
-      }
+      recomputeRemainingBudget();
       persistState();
       renderState();
       setStatus(`Nessie updated: ${vendor} $${amount.toFixed(2)}`, true);
@@ -344,8 +343,44 @@ function updateAccountSummary() {
     els.accountBudget.textContent = formatMoney(state.user_profile.total_monthly_budget || DEFAULT_BUDGET);
   }
   if (els.accountBudgetRemaining) {
-    els.accountBudgetRemaining.textContent = formatMoney(state.user_profile.remaining_monthly_budget || DEFAULT_BUDGET);
+    const remaining = Number(state.user_profile.remaining_monthly_budget || DEFAULT_BUDGET);
+    els.accountBudgetRemaining.textContent = formatMoney(remaining);
+    els.accountBudgetRemaining.classList.toggle("budget-positive", remaining >= 0);
+    els.accountBudgetRemaining.classList.toggle("budget-negative", remaining < 0);
   }
+}
+
+function recomputeRemainingBudget() {
+  const totalBudget = Number(state.user_profile.total_monthly_budget || DEFAULT_BUDGET);
+  const recurringTotal = getRecurringMonthlyTotal(state.recurring_payments || []);
+  const ledgerTotal = getCurrentMonthLedgerTotal(state.ledger || []);
+  const remaining = Number((totalBudget - recurringTotal - ledgerTotal).toFixed(2));
+  state.user_profile.remaining_monthly_budget = remaining;
+}
+
+function getRecurringMonthlyTotal(recurring) {
+  return recurring.reduce((sum, item) => {
+    if (item.active === false) return sum;
+    const amount = Number(item.amount || 0);
+    switch (item.frequency) {
+      case "weekly":
+        return sum + amount * 4;
+      case "yearly":
+        return sum + amount / 12;
+      case "monthly":
+      default:
+        return sum + amount;
+    }
+  }, 0);
+}
+
+function getCurrentMonthLedgerTotal(ledger) {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  return ledger.reduce((sum, item) => {
+    if (!item?.date || item.date.slice(0, 7) !== ym) return sum;
+    return sum + Number(item.amount || 0);
+  }, 0);
 }
 
 function getSession() {
