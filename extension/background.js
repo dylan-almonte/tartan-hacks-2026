@@ -100,13 +100,16 @@ async function handleMessage(message, sendResponse) {
       });
       let summary = await buildNessieSummary(config);
       if (previousSummary && Number(summary.balance) === Number(previousSummary.balance)) {
+        const spendDelta = Math.max(0, Number(summary.spendLast30 || 0) - Number(previousSummary.spendLast30 || 0));
+        const adjusted = spendDelta > 0 ? spendDelta : amount;
         summary = {
           ...summary,
-          balance: Number(Math.max(0, Number(summary.balance) - amount).toFixed(2)),
+          balance: Number(Math.max(0, Number(summary.balance) - adjusted).toFixed(2)),
         };
       }
       chrome.storage.local.set({ nessie_summary: summary });
       updateUserProfileSummary(summary);
+      updateRemainingBudget(amount);
       await broadcastToWebsite({
         type: "NUDGEPAY_NESSIE_PURCHASE",
         purchase: response,
@@ -215,6 +218,19 @@ function updateUserProfileSummary(summary) {
     const nextProfile = {
       ...result.user_profile,
       last_nessie_summary: summary,
+    };
+    chrome.storage.local.set({ user_profile: nextProfile });
+  });
+}
+
+function updateRemainingBudget(amount) {
+  chrome.storage.local.get(["user_profile"], (result) => {
+    if (!result?.user_profile) return;
+    const current = Number(result.user_profile.remaining_monthly_budget || result.user_profile.total_monthly_budget || 0);
+    const next = Math.max(0, current - Number(amount || 0));
+    const nextProfile = {
+      ...result.user_profile,
+      remaining_monthly_budget: Number(next.toFixed(2)),
     };
     chrome.storage.local.set({ user_profile: nextProfile });
   });

@@ -5,6 +5,7 @@ const STATE_KEY = "nudgepay_dashboard_state";
 const defaultState = {
   user_profile: {
     total_monthly_budget: 0,
+    remaining_monthly_budget: 0,
     currency: "USD",
     last_synced: null,
   },
@@ -20,6 +21,7 @@ const els = {
   budgetForm: document.getElementById("budgetForm"),
   budgetAmount: document.getElementById("budgetAmount"),
   budgetCurrency: document.getElementById("budgetCurrency"),
+  budgetRemaining: document.getElementById("budgetRemaining"),
   recurringForm: document.getElementById("recurringForm"),
   vendor: document.getElementById("vendor"),
   amount: document.getElementById("amount"),
@@ -55,6 +57,7 @@ els.budgetForm.addEventListener("submit", (event) => {
   const amount = Number(els.budgetAmount.value || 0);
   const currency = els.budgetCurrency.value || "USD";
   state.user_profile.total_monthly_budget = Number(amount.toFixed(2));
+  state.user_profile.remaining_monthly_budget = Number(amount.toFixed(2));
   state.user_profile.currency = currency;
   persistState();
   renderState();
@@ -142,6 +145,7 @@ els.nessieApplyBudget.addEventListener("click", () => {
   const allocation = Math.min(100, Math.max(0, allocationPercent)) / 100;
   const suggested = Math.max(0, Math.min(balance, base * allocation));
   state.user_profile.total_monthly_budget = Number(suggested.toFixed(2));
+  state.user_profile.remaining_monthly_budget = Number(suggested.toFixed(2));
   persistState();
   renderState();
   setStatus("Suggested budget applied.", true);
@@ -156,6 +160,10 @@ function removePayment(id) {
 function renderState() {
   els.budgetAmount.value = state.user_profile.total_monthly_budget || "";
   els.budgetCurrency.value = state.user_profile.currency || "USD";
+
+  if (els.budgetRemaining) {
+    els.budgetRemaining.textContent = formatMoney(state.user_profile.remaining_monthly_budget);
+  }
 
   els.paymentsList.innerHTML = "";
   state.recurring_payments.forEach((payment) => {
@@ -260,6 +268,12 @@ function initExtensionUpdates() {
       }
       const amount = Number(message.purchase?.amount || 0);
       const vendor = message.purchase?.description || "Purchase";
+      if (state.user_profile.remaining_monthly_budget !== undefined) {
+        const nextRemaining = Math.max(0, Number(state.user_profile.remaining_monthly_budget || 0) - amount);
+        state.user_profile.remaining_monthly_budget = Number(nextRemaining.toFixed(2));
+        persistState();
+        renderState();
+      }
       setStatus(`Nessie updated: ${vendor} $${amount.toFixed(2)}`, true);
       return;
     }

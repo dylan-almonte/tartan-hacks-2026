@@ -51,7 +51,13 @@ function sendMessageToTab(tabId, message) {
 async function getBudget() {
   const stored = await new Promise((resolve) => {
     chrome.storage.local.get(["user_profile"], (result) => {
-      const budget = Number(result?.user_profile?.total_monthly_budget || 0);
+      const profile = result?.user_profile || {};
+      const remaining = Number(profile.remaining_monthly_budget || 0);
+      if (remaining > 0) {
+        resolve(Number(remaining.toFixed(2)));
+        return;
+      }
+      const budget = Number(profile.total_monthly_budget || 0);
       resolve(Number(budget.toFixed(2)));
     });
   });
