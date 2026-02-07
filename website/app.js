@@ -1,4 +1,4 @@
-const EXTENSION_ID = "pjofeihfkhcnmpkjecmafdneclakjngg"; // TODO: replace with the real extension id
+const EXTENSION_ID = CONFIG.EXTENSION_ID;
 
 const STATE_KEY = "nudgepay_dashboard_state";
 const SESSION_KEY = "nudgepay_session";
