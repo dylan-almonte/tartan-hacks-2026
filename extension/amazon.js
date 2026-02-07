@@ -1,5 +1,6 @@
 const AMAZON_VENDOR = "Amazon";
 const BANNER_ID = "nudgepay-banner";
+let lastTotal = null;
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type !== "NUDGEPAY_GET_TOTAL") {
@@ -77,17 +78,33 @@ function bootstrapBanner() {
   if (initial !== null) {
     updateBanner(initial);
   }
+
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local") return;
+    if (!changes.user_profile) return;
+    if (lastTotal === null) return;
+    updateBanner(lastTotal);
+  });
 }
 
 function updateBanner(total) {
+  lastTotal = total;
   chrome.storage.local.get(["user_profile"], (result) => {
-    const budget = Number(result?.user_profile?.total_monthly_budget || 0);
+    const profile = result?.user_profile || {};
+    const budget = getActiveBudget(profile);
     const predicted = Number((budget - total).toFixed(2));
     const banner = ensureBanner();
     banner.querySelector(".nudgepay-total").textContent = formatMoney(total);
     banner.querySelector(".nudgepay-budget").textContent = formatMoney(budget);
     banner.querySelector(".nudgepay-predicted").textContent = formatMoney(predicted);
   });
+}
+
+function getActiveBudget(profile) {
+  const remaining = Number(profile.remaining_monthly_budget || 0);
+  if (remaining > 0) return Number(remaining.toFixed(2));
+  const total = Number(profile.total_monthly_budget || 0);
+  return Number(total.toFixed(2));
 }
 
 function ensureBanner() {

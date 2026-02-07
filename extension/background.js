@@ -65,6 +65,7 @@ async function handleMessage(message, sendResponse) {
       const summary = await buildNessieSummary(config);
       chrome.storage.local.set({ nessie_summary: summary });
       updateUserProfileSummary(summary);
+      await broadcastToWebsite({ type: "NUDGEPAY_NESSIE_SUMMARY", summary });
       sendResponse({ ok: true, summary });
     } catch (error) {
       sendResponse({ ok: false, error: error?.message || String(error) });
@@ -279,7 +280,7 @@ async function buildNessieSummary(config) {
 
 function broadcastToWebsite(message) {
   return new Promise((resolve) => {
-    chrome.tabs.query({ url: ["http://localhost:5173/*", "http://127.0.0.1:5173/*"] }, (tabs) => {
+    chrome.tabs.query({ url: ["http://localhost/*", "http://127.0.0.1/*"] }, (tabs) => {
       tabs.forEach((tab) => {
         if (tab?.id) {
           chrome.tabs.sendMessage(tab.id, message);

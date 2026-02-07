@@ -30,14 +30,14 @@
       "js": ["ubereats.js"]
     },
     {
-      "matches": ["http://localhost:5173/*", "http://127.0.0.1:5173/*"],
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
       "js": ["bridge.js"]
     }
   ],
   "externally_connectable": {
     "matches": [
-      "http://localhost:5173/*",
-      "http://127.0.0.1:5173/*"
+      "http://localhost/*",
+      "http://127.0.0.1/*"
     ]
   }
 }
