@@ -1,6 +1,17 @@
-const EXTENSION_ID = "pjofeihfkhcnmpkjecmafdneclakjngg"; // TODO: replace with the real extension id
-
+const EXTENSION_ID = CONFIG.EXTENSION_ID;
+const SESSION_KEY = "nudgepay_session";
 const STATE_KEY = "nudgepay_dashboard_state";
+
+// Auth guard — redirect to login if no session
+const _session = localStorage.getItem(SESSION_KEY);
+if (!_session) {
+  window.location.href = "login.html";
+} else {
+  try {
+    const s = JSON.parse(_session);
+    if (!s.apiKey || !s.accountId) window.location.href = "login.html";
+  } catch { window.location.href = "login.html"; }
+}
 
 const defaultState = {
   user_profile: {
@@ -48,6 +59,12 @@ const els = {
 };
 
 const state = loadState();
+
+// Pre-fill Nessie fields from session
+const _sessionData = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
+if (_sessionData.apiKey && els.nessieApiKey) els.nessieApiKey.value = _sessionData.apiKey;
+if (_sessionData.accountId && els.nessieAccountId) els.nessieAccountId.value = _sessionData.accountId;
+
 renderState();
 initLiquidBackground();
 initExtensionUpdates();
@@ -149,6 +166,12 @@ els.nessieApplyBudget.addEventListener("click", () => {
   persistState();
   renderState();
   setStatus("Suggested budget applied.", true);
+});
+
+document.getElementById("logoutLink")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem(SESSION_KEY);
+  window.location.href = "login.html";
 });
 
 function removePayment(id) {

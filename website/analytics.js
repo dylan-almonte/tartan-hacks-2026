@@ -1,4 +1,16 @@
+const SESSION_KEY = "nudgepay_session";
 const STATE_KEY = "nudgepay_dashboard_state";
+
+// Auth guard
+const _session = localStorage.getItem(SESSION_KEY);
+if (!_session) {
+  window.location.href = "login.html";
+} else {
+  try {
+    const s = JSON.parse(_session);
+    if (!s.apiKey || !s.accountId) window.location.href = "login.html";
+  } catch { window.location.href = "login.html"; }
+}
 
 /* ── Fixed category color map ── */
 const CATEGORY_COLORS = {
@@ -85,6 +97,12 @@ els.clearLedger.addEventListener("click", () => {
   persistState();
   renderAll();
   els.demoStatus.textContent = "Ledger cleared.";
+});
+
+document.getElementById("logoutLink")?.addEventListener("click", (e) => {
+  e.preventDefault();
+  localStorage.removeItem(SESSION_KEY);
+  window.location.href = "login.html";
 });
 
 /* ── State helpers ── */

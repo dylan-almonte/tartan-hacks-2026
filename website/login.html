@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NudgePay Login</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="mosaic-backdrop" aria-hidden="true">
+      <div class="liquid-grid"></div>
+      <div class="shard-layer" id="shardLayer"></div>
+      <div class="bubble-layer" id="bubbleLayer"></div>
+    </div>
+    <div class="page login-page">
+      <div class="login-card">
+        <p class="eyebrow">NudgePay</p>
+        <h1>Welcome</h1>
+        <p class="subtitle">Connect your Nessie account or create a demo to get started.</p>
+
+        <form id="loginForm" class="form">
+          <label>
+            Nessie API Key
+            <input type="password" id="apiKey" placeholder="Paste your Nessie API key" required />
+          </label>
+
+          <div id="existingAccountSection">
+            <label>
+              Account ID (leave blank to create a new demo account)
+              <input type="text" id="accountId" placeholder="Optional — existing account ID" />
+            </label>
+          </div>
+
+          <button type="submit" id="loginButton" class="primary">Log In / Create Demo</button>
+        </form>
+
+        <div id="loginStatus" class="login-status"></div>
+
+        <div id="accountInfo" class="account-info" style="display:none">
+          <h2>Account Created</h2>
+          <div class="list" id="accountDetails"></div>
+          <button id="continueButton" class="primary">Continue to Dashboard</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="login.js"></script>
+  </body>
+</html>
