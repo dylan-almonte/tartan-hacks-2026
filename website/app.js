@@ -1,17 +1,8 @@
-const EXTENSION_ID = CONFIG.EXTENSION_ID;
-const SESSION_KEY = "nudgepay_session";
-const STATE_KEY = "nudgepay_dashboard_state";
+const EXTENSION_ID = "oifcpgkjdijdijbbbikjpdeehnflkand"; // TODO: replace with the real extension id
 
-// Auth guard — redirect to login if no session
-const _session = localStorage.getItem(SESSION_KEY);
-if (!_session) {
-  window.location.href = "login.html";
-} else {
-  try {
-    const s = JSON.parse(_session);
-    if (!s.apiKey || !s.accountId) window.location.href = "login.html";
-  } catch { window.location.href = "login.html"; }
-}
+const STATE_KEY = "nudgepay_dashboard_state";
+const SESSION_KEY = "nudgepay_session";
+const DEFAULT_BUDGET = 500;
 
 const defaultState = {
   user_profile: {
@@ -45,29 +36,25 @@ const els = {
   resetButton: document.getElementById("resetButton"),
   payloadPreview: document.getElementById("payloadPreview"),
   syncStatus: document.getElementById("syncStatus"),
-  nessieCreateDemo: document.getElementById("nessieCreateDemo"),
-  nessieDemoStatus: document.getElementById("nessieDemoStatus"),
   nessieForm: document.getElementById("nessieForm"),
-  nessieApiKey: document.getElementById("nessieApiKey"),
-  nessieAccountId: document.getElementById("nessieAccountId"),
   nessieSavings: document.getElementById("nessieSavings"),
   nessieAllocation: document.getElementById("nessieAllocation"),
-  nessieConnect: document.getElementById("nessieConnect"),
-  nessieFetch: document.getElementById("nessieFetch"),
-  nessieSummary: document.getElementById("nessieSummary"),
   nessieApplyBudget: document.getElementById("nessieApplyBudget"),
+  logoutLink: document.getElementById("logoutLink"),
+  accountName: document.getElementById("accountName"),
+  accountId: document.getElementById("accountId"),
+  accountBalance: document.getElementById("accountBalance"),
+  accountBudget: document.getElementById("accountBudget"),
+  accountBudgetRemaining: document.getElementById("accountBudgetRemaining"),
 };
 
+enforceSession();
 const state = loadState();
-
-// Pre-fill Nessie fields from session
-const _sessionData = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
-if (_sessionData.apiKey && els.nessieApiKey) els.nessieApiKey.value = _sessionData.apiKey;
-if (_sessionData.accountId && els.nessieAccountId) els.nessieAccountId.value = _sessionData.accountId;
-
+ensureDefaultBudget();
 renderState();
 initLiquidBackground();
 initExtensionUpdates();
+initAccountSummary();
 
 els.budgetForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -110,68 +97,29 @@ els.resetButton.addEventListener("click", () => {
   renderState();
 });
 
-els.nessieCreateDemo.addEventListener("click", async () => {
-  setDemoStatus("Creating demo customer/account/merchant...");
-  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_CREATE_DEMO");
-  if (!response?.ok) {
-    setDemoStatus(response?.error || "Failed to create demo Nessie data.");
-    return;
-  }
-  if (response.accountId) {
-    els.nessieAccountId.value = response.accountId;
-  }
-  setDemoStatus("Demo Nessie data created. Save Nessie config to use it.");
-});
-
-els.nessieConnect.addEventListener("click", async () => {
-  const payload = {
-    apiKey: els.nessieApiKey.value.trim(),
-    accountId: els.nessieAccountId.value.trim(),
-  };
-  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_SET_CONFIG", payload);
-  if (!response?.ok) {
-    setStatus(response?.error || "Failed to save Nessie config.", false);
-    return;
-  }
-  setStatus("Nessie config saved in extension.", true);
-});
-
-els.nessieFetch.addEventListener("click", async () => {
-  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_GET_SUMMARY");
-  if (!response?.ok) {
-    setStatus(response?.error || "Failed to fetch Nessie summary.", false);
-    return;
-  }
-  renderNessieSummary(response.summary);
-  state.user_profile.last_nessie_summary = response.summary;
-  persistState();
-  setStatus("Nessie summary loaded.", true);
-});
+if (els.logoutLink) {
+  els.logoutLink.addEventListener("click", (event) => {
+    event.preventDefault();
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(STATE_KEY);
+    window.location.href = "login.html";
+  });
+}
 
 els.nessieApplyBudget.addEventListener("click", () => {
   const summary = state.user_profile.last_nessie_summary;
-  if (!summary) {
-    setStatus("Fetch Nessie summary first.", false);
-    return;
-  }
   const savings = Number(els.nessieSavings.value || 0);
   const allocationPercent = Number(els.nessieAllocation.value || 30);
-  const income = Number(summary.incomeLast30 || 0);
-  const balance = Number(summary.balance || 0);
-  const base = income > 0 ? income - savings : balance - savings;
+  const income = Number(summary?.incomeLast30 || 0);
+  const balance = Number(summary?.balance || 0);
+  const base = income > 0 ? income - savings : balance - savings || DEFAULT_BUDGET;
   const allocation = Math.min(100, Math.max(0, allocationPercent)) / 100;
-  const suggested = Math.max(0, Math.min(balance, base * allocation));
+  const suggested = Math.max(0, Math.min(balance || base, base * allocation));
   state.user_profile.total_monthly_budget = Number(suggested.toFixed(2));
   state.user_profile.remaining_monthly_budget = Number(suggested.toFixed(2));
   persistState();
   renderState();
   setStatus("Suggested budget applied.", true);
-});
-
-document.getElementById("logoutLink")?.addEventListener("click", (e) => {
-  e.preventDefault();
-  localStorage.removeItem(SESSION_KEY);
-  window.location.href = "login.html";
 });
 
 function removePayment(id) {
@@ -209,6 +157,7 @@ function renderState() {
   });
 
   els.payloadPreview.textContent = JSON.stringify(state, null, 2);
+  updateAccountSummary();
 }
 
 function persistState() {
@@ -225,6 +174,32 @@ function loadState() {
     return { ...structuredClone(defaultState), ...parsed };
   } catch (error) {
     return structuredClone(defaultState);
+  }
+}
+
+function enforceSession() {
+  const session = localStorage.getItem(SESSION_KEY);
+  if (!session) {
+    window.location.href = "login.html";
+    return;
+  }
+  try {
+    const parsed = JSON.parse(session);
+    if (!parsed?.apiKey || !parsed?.accountId) {
+      localStorage.removeItem(SESSION_KEY);
+      window.location.href = "login.html";
+    }
+  } catch {
+    localStorage.removeItem(SESSION_KEY);
+    window.location.href = "login.html";
+  }
+}
+
+function ensureDefaultBudget() {
+  if (!state.user_profile.total_monthly_budget) {
+    state.user_profile.total_monthly_budget = DEFAULT_BUDGET;
+    state.user_profile.remaining_monthly_budget = DEFAULT_BUDGET;
+    persistState();
   }
 }
 
@@ -289,14 +264,15 @@ function initExtensionUpdates() {
         renderNessieSummary(message.summary);
         persistState();
       }
-      const amount = Number(message.purchase?.amount || 0);
-      const vendor = message.purchase?.description || "Purchase";
+      const amount = Number(message.amount ?? message.purchase?.amount ?? 0);
+      const vendor = message.vendor || message.purchase?.description || "Purchase";
+      const category = message.category || "Shopping";
       const ledgerEntry = {
         id: `txn_${Date.now()}`,
         date: new Date().toISOString(),
         amount: Number(amount.toFixed(2)),
         vendor,
-        category: "Shopping",
+        category,
         type: "Variable",
         source: "extension",
         status: "confirmed",
@@ -328,29 +304,58 @@ function setStatus(message, success) {
   els.syncStatus.classList.toggle("synced", Boolean(success));
 }
 
-function setDemoStatus(message) {
-  if (!els.nessieDemoStatus) return;
-  els.nessieDemoStatus.textContent = message || "";
+function renderNessieSummary(summary) {
+  if (!summary) return;
+  updateAccountSummary();
 }
 
-function renderNessieSummary(summary) {
-  if (!els.nessieSummary) return;
-  els.nessieSummary.innerHTML = "";
-  if (!summary) return;
+function initAccountSummary() {
+  const session = getSession();
+  if (!session?.apiKey || !session?.accountId) {
+    updateAccountSummary();
+    return;
+  }
 
-  const items = [
-    { label: "Account", value: summary.accountName || "Account" },
-    { label: "Balance", value: formatMoney(summary.balance) },
-    { label: "Income (30d)", value: formatMoney(summary.incomeLast30) },
-    { label: "Spend (30d)", value: formatMoney(summary.spendLast30) },
-  ];
+  sendExtensionMessage("NUDGEPAY_NESSIE_SET_CONFIG", {
+    apiKey: session.apiKey,
+    accountId: session.accountId,
+  }).then(() => sendExtensionMessage("NUDGEPAY_NESSIE_GET_SUMMARY"))
+    .then((response) => {
+      if (response?.ok && response.summary) {
+        state.user_profile.last_nessie_summary = response.summary;
+        persistState();
+        updateAccountSummary();
+      }
+    });
+}
 
-  items.forEach((item) => {
-    const row = document.createElement("div");
-    row.className = "list-item";
-    row.innerHTML = `<span>${item.label}</span><small>${item.value}</small>`;
-    els.nessieSummary.appendChild(row);
-  });
+function updateAccountSummary() {
+  if (els.accountName) {
+    els.accountName.textContent = state.user_profile.last_nessie_summary?.accountName || "--";
+  }
+  if (els.accountId) {
+    const accountId = state.user_profile.last_nessie_summary?.accountId || getSession()?.accountId || "--";
+    els.accountId.textContent = `Account ID: ${accountId}`;
+  }
+  if (els.accountBalance) {
+    els.accountBalance.textContent = formatMoney(state.user_profile.last_nessie_summary?.balance || 0);
+  }
+  if (els.accountBudget) {
+    els.accountBudget.textContent = formatMoney(state.user_profile.total_monthly_budget || DEFAULT_BUDGET);
+  }
+  if (els.accountBudgetRemaining) {
+    els.accountBudgetRemaining.textContent = formatMoney(state.user_profile.remaining_monthly_budget || DEFAULT_BUDGET);
+  }
+}
+
+function getSession() {
+  const session = localStorage.getItem(SESSION_KEY);
+  if (!session) return null;
+  try {
+    return JSON.parse(session);
+  } catch {
+    return null;
+  }
 }
 
 function initLiquidBackground() {
