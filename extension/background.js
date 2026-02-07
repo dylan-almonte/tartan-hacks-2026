@@ -1,6 +1,6 @@
 const MESSAGE_TYPE = "NUDGEPAY_SET_DATA";
 const NESSIE_CONFIG_KEY = "nessie_config";
-const NESSIE_BASE_URL = "https://api.nessieisreal.com";
+const NESSIE_BASE_URLS = ["https://api.nessieisreal.com", "https://api.reimaginebanking.com"];
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   handleMessage(message, sendResponse);
@@ -185,16 +185,27 @@ function getNessieConfig() {
 }
 
 async function fetchNessieJson(path, apiKey, options = {}) {
-  const url = `${NESSIE_BASE_URL}${path}${path.includes("?") ? "&" : "?"}key=${apiKey}`;
-  const response = await fetch(url, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!response.ok) {
-    const text = await response.text();
-    throw new Error(`Nessie error: ${response.status} ${text}`);
+  let lastError;
+  for (const baseUrl of NESSIE_BASE_URLS) {
+    try {
+      const url = `${baseUrl}${path}${path.includes("?") ? "&" : "?"}key=${apiKey}`;
+      const response = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...options,
+      });
+      if (!response.ok) {
+        const text = await response.text();
+        throw new Error(`Nessie error: ${response.status} ${text}`);
+      }
+      return response.json();
+    } catch (error) {
+      lastError = error;
+      if (error && error.message && error.message.startsWith("Nessie error:")) {
+        throw error;
+      }
+    }
   }
-  return response.json();
+  throw lastError || new Error("Nessie request failed");
 }
 
 async function buildNessieSummary(config) {
