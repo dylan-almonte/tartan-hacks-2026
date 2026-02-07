@@ -4,6 +4,7 @@ const els = {
   monthlyBudget: document.getElementById("monthlyBudget"),
   predictedBalance: document.getElementById("predictedBalance"),
   statusMessage: document.getElementById("statusMessage"),
+  checkoutButton: document.getElementById("checkoutButton"),
 };
 
 init();
@@ -30,6 +31,8 @@ async function init() {
   els.vendorBadge.textContent = response.vendor || "Checkout";
   els.detectedTotal.textContent = formatMoney(total);
   els.predictedBalance.textContent = formatMoney(predicted);
+  els.checkoutButton.disabled = false;
+  els.checkoutButton.addEventListener("click", () => simulateCheckout(total, response.vendor));
   setStatus("Prediction ready. Proceed with caution.");
 }
 
@@ -45,13 +48,56 @@ function sendMessageToTab(tabId, message) {
   });
 }
 
-function getBudget() {
-  return new Promise((resolve) => {
+async function getBudget() {
+  const stored = await new Promise((resolve) => {
     chrome.storage.local.get(["user_profile"], (result) => {
       const budget = Number(result?.user_profile?.total_monthly_budget || 0);
       resolve(Number(budget.toFixed(2)));
     });
   });
+
+  if (stored > 0) {
+    return stored;
+  }
+
+  const summary = await getNessieSummary();
+  if (summary?.balance) {
+    return Number(summary.balance.toFixed(2));
+  }
+
+  return 0;
+}
+
+function getNessieSummary() {
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage({ type: "NUDGEPAY_NESSIE_GET_SUMMARY" }, (response) => {
+      if (chrome.runtime.lastError || !response?.ok) {
+        setStatus(response?.error || "Nessie summary unavailable.");
+        resolve(null);
+        return;
+      }
+      resolve(response.summary || null);
+    });
+  });
+}
+
+function simulateCheckout(amount, vendor) {
+  els.checkoutButton.disabled = true;
+  chrome.runtime.sendMessage(
+    {
+      type: "NUDGEPAY_NESSIE_CHECKOUT",
+      payload: { amount, vendor },
+    },
+    (response) => {
+      if (chrome.runtime.lastError || !response?.ok) {
+        setStatus(response?.error || "Nessie checkout failed.");
+        els.checkoutButton.disabled = false;
+        return;
+      }
+      setStatus("Checkout simulated in Nessie.");
+      els.checkoutButton.disabled = false;
+    }
+  );
 }
 
 function setStatus(message) {

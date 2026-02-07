@@ -32,11 +32,23 @@ const els = {
   resetButton: document.getElementById("resetButton"),
   payloadPreview: document.getElementById("payloadPreview"),
   syncStatus: document.getElementById("syncStatus"),
+  nessieCreateDemo: document.getElementById("nessieCreateDemo"),
+  nessieDemoStatus: document.getElementById("nessieDemoStatus"),
+  nessieForm: document.getElementById("nessieForm"),
+  nessieApiKey: document.getElementById("nessieApiKey"),
+  nessieAccountId: document.getElementById("nessieAccountId"),
+  nessieSavings: document.getElementById("nessieSavings"),
+  nessieAllocation: document.getElementById("nessieAllocation"),
+  nessieConnect: document.getElementById("nessieConnect"),
+  nessieFetch: document.getElementById("nessieFetch"),
+  nessieSummary: document.getElementById("nessieSummary"),
+  nessieApplyBudget: document.getElementById("nessieApplyBudget"),
 };
 
 const state = loadState();
 renderState();
 initLiquidBackground();
+initExtensionUpdates();
 
 els.budgetForm.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -76,6 +88,63 @@ els.resetButton.addEventListener("click", () => {
   localStorage.removeItem(STATE_KEY);
   Object.assign(state, structuredClone(defaultState));
   renderState();
+});
+
+els.nessieCreateDemo.addEventListener("click", async () => {
+  setDemoStatus("Creating demo customer/account/merchant...");
+  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_CREATE_DEMO");
+  if (!response?.ok) {
+    setDemoStatus(response?.error || "Failed to create demo Nessie data.");
+    return;
+  }
+  if (response.accountId) {
+    els.nessieAccountId.value = response.accountId;
+  }
+  setDemoStatus("Demo Nessie data created. Save Nessie config to use it.");
+});
+
+els.nessieConnect.addEventListener("click", async () => {
+  const payload = {
+    apiKey: els.nessieApiKey.value.trim(),
+    accountId: els.nessieAccountId.value.trim(),
+  };
+  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_SET_CONFIG", payload);
+  if (!response?.ok) {
+    setStatus(response?.error || "Failed to save Nessie config.", false);
+    return;
+  }
+  setStatus("Nessie config saved in extension.", true);
+});
+
+els.nessieFetch.addEventListener("click", async () => {
+  const response = await sendExtensionMessage("NUDGEPAY_NESSIE_GET_SUMMARY");
+  if (!response?.ok) {
+    setStatus(response?.error || "Failed to fetch Nessie summary.", false);
+    return;
+  }
+  renderNessieSummary(response.summary);
+  state.user_profile.last_nessie_summary = response.summary;
+  persistState();
+  setStatus("Nessie summary loaded.", true);
+});
+
+els.nessieApplyBudget.addEventListener("click", () => {
+  const summary = state.user_profile.last_nessie_summary;
+  if (!summary) {
+    setStatus("Fetch Nessie summary first.", false);
+    return;
+  }
+  const savings = Number(els.nessieSavings.value || 0);
+  const allocationPercent = Number(els.nessieAllocation.value || 30);
+  const income = Number(summary.incomeLast30 || 0);
+  const balance = Number(summary.balance || 0);
+  const base = income > 0 ? income - savings : balance - savings;
+  const allocation = Math.min(100, Math.max(0, allocationPercent)) / 100;
+  const suggested = Math.max(0, Math.min(balance, base * allocation));
+  state.user_profile.total_monthly_budget = Number(suggested.toFixed(2));
+  persistState();
+  renderState();
+  setStatus("Suggested budget applied.", true);
 });
 
 function removePayment(id) {
@@ -160,9 +229,78 @@ async function syncToExtension() {
   }
 }
 
+function sendExtensionMessage(type, payload) {
+  if (!window.chrome?.runtime?.sendMessage) {
+    return Promise.resolve({ ok: false, error: "Chrome extension APIs unavailable" });
+  }
+  return new Promise((resolve) => {
+    chrome.runtime.sendMessage(EXTENSION_ID, { type, payload }, (response) => {
+      if (chrome.runtime.lastError) {
+        resolve({ ok: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+      resolve(response || { ok: false, error: "No response" });
+    });
+  });
+}
+
+function initExtensionUpdates() {
+  window.addEventListener("message", (event) => {
+    if (event.source !== window) return;
+    const data = event.data;
+    if (!data || data.source !== "nudgepay-extension") return;
+    const message = data.payload;
+    if (!message?.type) return;
+
+    if (message.type === "NUDGEPAY_NESSIE_PURCHASE") {
+      if (message.summary) {
+        state.user_profile.last_nessie_summary = message.summary;
+        renderNessieSummary(message.summary);
+        persistState();
+      }
+      const amount = Number(message.purchase?.amount || 0);
+      const vendor = message.purchase?.description || "Purchase";
+      setStatus(`Nessie updated: ${vendor} $${amount.toFixed(2)}`, true);
+      return;
+    }
+
+    if (message.type === "NUDGEPAY_NESSIE_SUMMARY") {
+      state.user_profile.last_nessie_summary = message.summary;
+      renderNessieSummary(message.summary);
+      persistState();
+      setStatus("Nessie summary updated.", true);
+    }
+  });
+}
+
 function setStatus(message, success) {
   els.syncStatus.textContent = message;
   els.syncStatus.classList.toggle("synced", Boolean(success));
+}
+
+function setDemoStatus(message) {
+  if (!els.nessieDemoStatus) return;
+  els.nessieDemoStatus.textContent = message || "";
+}
+
+function renderNessieSummary(summary) {
+  if (!els.nessieSummary) return;
+  els.nessieSummary.innerHTML = "";
+  if (!summary) return;
+
+  const items = [
+    { label: "Account", value: summary.accountName || "Account" },
+    { label: "Balance", value: formatMoney(summary.balance) },
+    { label: "Income (30d)", value: formatMoney(summary.incomeLast30) },
+    { label: "Spend (30d)", value: formatMoney(summary.spendLast30) },
+  ];
+
+  items.forEach((item) => {
+    const row = document.createElement("div");
+    row.className = "list-item";
+    row.innerHTML = `<span>${item.label}</span><small>${item.value}</small>`;
+    els.nessieSummary.appendChild(row);
+  });
 }
 
 function initLiquidBackground() {
@@ -315,4 +453,8 @@ function maybeSpawnBubble(layer, x, y, setLast, lastBubble) {
   bubble.style.top = `${y}px`;
   layer.appendChild(bubble);
   bubble.addEventListener("animationend", () => bubble.remove());
+}
+
+function formatMoney(value) {
+  return `$${Number(value || 0).toFixed(2)}`;
 }
