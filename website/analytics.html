@@ -66,6 +66,17 @@
         </section>
 
         <section class="card full">
+          <h2>AI Budget Summary</h2>
+          <div id="aiSummary" class="ai-summary-content">
+            <p class="muted">Click the button below to generate an AI-powered summary of your spending.</p>
+          </div>
+          <div style="margin-top: 1rem;">
+            <button id="generateSummary" class="primary">Generate Summary</button>
+            <span id="aiLoading" class="muted" style="display:none; margin-left: 1rem;">Analyzing your spending...</span>
+          </div>
+        </section>
+
+        <section class="card full">
           <h2>Daily Spending</h2>
           <p class="muted" id="dailyChartSubtitle">Stacked by category across the selected month</p>
           <div class="chart-container chart-tall">

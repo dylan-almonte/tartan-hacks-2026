@@ -1,5 +1,6 @@
 const SESSION_KEY = "nudgepay_session";
 const STATE_KEY = "nudgepay_dashboard_state";
+const DEFAULT_BUDGET = 500;
 
 // Auth guard
 const _session = localStorage.getItem(SESSION_KEY);
@@ -86,11 +87,24 @@ els.clearFilters.addEventListener("click", () => {
 
 els.generateDemo.addEventListener("click", () => {
   generateDemoTransactions();
+  // Update balance in the Nessie summary so the dashboard reflects demo data
+  const totalBudget = Number(state.user_profile.total_monthly_budget || DEFAULT_BUDGET);
+  const currentMonthSpent = getCurrentMonthLedgerTotal(state.ledger);
+  const demoBalance = Number((totalBudget - currentMonthSpent).toFixed(2));
+  const session = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
+  state.user_profile.last_nessie_summary = {
+    ...(state.user_profile.last_nessie_summary || {}),
+    balance: demoBalance,
+    accountName: state.user_profile.last_nessie_summary?.accountName || "Demo Account",
+    accountId: state.user_profile.last_nessie_summary?.accountId || session.accountId || "demo",
+    accountType: state.user_profile.last_nessie_summary?.accountType || "Checking",
+    spendLast30: Number(getCurrentMonthLedgerTotal(state.ledger).toFixed(2)),
+  };
   updateRemainingBudget();
   persistState();
   populateCategoryFilter();
   renderAll();
-  els.demoStatus.textContent = `Generated demo transactions. Ledger now has ${state.ledger.length} entries.`;
+  els.demoStatus.textContent = `Generated demo transactions. Ledger now has ${state.ledger.length} entries. Balance: $${demoBalance.toFixed(2)}`;
 });
 
 els.clearLedger.addEventListener("click", () => {
@@ -106,6 +120,105 @@ document.getElementById("logoutLink")?.addEventListener("click", (e) => {
   localStorage.removeItem(SESSION_KEY);
   window.location.href = "login.html";
 });
+
+document.getElementById("generateSummary")?.addEventListener("click", generateAISummary);
+
+/* ── AI Summary (Gemini) ── */
+
+async function generateAISummary() {
+  const summaryDiv = document.getElementById("aiSummary");
+  const loadingEl = document.getElementById("aiLoading");
+  const btn = document.getElementById("generateSummary");
+
+  if (!CONFIG.GEMINI_API_KEY) {
+    summaryDiv.innerHTML = '<p style="color:#e74c3c;">Please set your Gemini API key in <code>config.js</code> to use this feature.</p>';
+    return;
+  }
+
+  btn.disabled = true;
+  loadingEl.style.display = "inline";
+  summaryDiv.innerHTML = '<p class="muted">Generating summary...</p>';
+
+  try {
+    const filtered = getFilteredLedger();
+    const budget = state.user_profile.total_monthly_budget || DEFAULT_BUDGET;
+    const balance = state.user_profile.last_nessie_summary?.balance ?? "unknown";
+    const recurring = state.recurring_payments || [];
+
+    // Build a spending summary for the prompt
+    const totalSpent = filtered.reduce((s, t) => s + t.amount, 0);
+    const { labels: catLabels, data: catData } = aggregateByCategory(filtered);
+    const categoryBreakdown = catLabels.map((c, i) => `${c}: $${catData[i].toFixed(2)}`).join(", ");
+
+    const vendorTotals = {};
+    filtered.forEach((t) => { vendorTotals[t.vendor] = (vendorTotals[t.vendor] || 0) + t.amount; });
+    const topVendors = Object.entries(vendorTotals).sort((a, b) => b[1] - a[1]).slice(0, 5)
+      .map(([v, amt]) => `${v}: $${amt.toFixed(2)}`).join(", ");
+
+    const prompt = `You are a helpful personal finance advisor. Analyze the following spending data and provide a concise budget summary with actionable suggestions.
+
+Monthly Budget: $${budget}
+Account Balance: $${balance}
+Total Spent (filtered period): $${totalSpent.toFixed(2)}
+Number of Transactions: ${filtered.length}
+Recurring Payments: ${recurring.length > 0 ? recurring.map(r => `${r.name}: $${r.amount}/${r.frequency}`).join(", ") : "None tracked"}
+Spending by Category: ${categoryBreakdown || "No data"}
+Top Vendors: ${topVendors || "No data"}
+
+Please provide:
+1. A brief overview of spending patterns
+2. Key insights (areas of high spending, unusual patterns)
+3. 2-3 specific, actionable suggestions to improve budget management
+
+Keep it concise and friendly. Use markdown formatting.`;
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${CONFIG.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+        }),
+      }
+    );
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.error?.message || `API error (${resp.status})`);
+    }
+
+    const data = await resp.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    if (!text) throw new Error("No response from Gemini.");
+
+    summaryDiv.innerHTML = markdownToHtml(text);
+  } catch (err) {
+    summaryDiv.innerHTML = `<p style="color:#e74c3c;">Error: ${err.message}</p>`;
+  } finally {
+    btn.disabled = false;
+    loadingEl.style.display = "none";
+  }
+}
+
+function markdownToHtml(md) {
+  return md
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/^### (.+)$/gm, "<h4>$1</h4>")
+    .replace(/^## (.+)$/gm, "<h3>$1</h3>")
+    .replace(/^# (.+)$/gm, "<h2>$1</h2>")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/^[-*] (.+)$/gm, "<li>$1</li>")
+    .replace(/(<li>.*<\/li>)/gs, "<ul>$1</ul>")
+    .replace(/<\/ul>\s*<ul>/g, "")
+    .replace(/^(\d+)\. (.+)$/gm, "<li>$2</li>")
+    .replace(/\n{2,}/g, "</p><p>")
+    .replace(/^/, "<p>").replace(/$/, "</p>")
+    .replace(/<p><h([234])>/g, "<h$1>").replace(/<\/h([234])><\/p>/g, "</h$1>")
+    .replace(/<p><ul>/g, "<ul>").replace(/<\/ul><\/p>/g, "</ul>")
+    .replace(/<p><\/p>/g, "");
+}
 
 /* ── State helpers ── */
 
