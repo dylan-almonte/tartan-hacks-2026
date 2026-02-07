@@ -86,6 +86,8 @@ async function handleMessage(message, sendResponse) {
       sendResponse({ ok: false, error: "Missing checkout amount" });
       return;
     }
+    const vendor = message.payload?.vendor || "Checkout";
+    const category = categorizeVendor(vendor);
 
     try {
       const previousSummary = await getStoredSummary();
@@ -93,7 +95,7 @@ async function handleMessage(message, sendResponse) {
         merchant_id: config.merchantId,
         medium: "balance",
         amount: Number(amount.toFixed(2)),
-        description: message.payload?.vendor || "Demo checkout",
+        description: vendor,
       };
       const response = await fetchNessieJson(`/accounts/${config.accountId}/purchases`, config.apiKey, {
         method: "POST",
@@ -115,8 +117,8 @@ async function handleMessage(message, sendResponse) {
         id: `txn_${Date.now()}`,
         date: new Date().toISOString(),
         amount: Number(amount.toFixed(2)),
-        vendor: message.payload?.vendor || "Checkout",
-        category: "Shopping",
+        vendor,
+        category,
         type: "Variable",
         source: "extension",
         status: "confirmed",
@@ -125,6 +127,9 @@ async function handleMessage(message, sendResponse) {
         type: "NUDGEPAY_NESSIE_PURCHASE",
         purchase: response,
         summary,
+        amount: Number(amount.toFixed(2)),
+        vendor,
+        category,
       });
       sendResponse({ ok: true, purchase: response, summary });
     } catch (error) {
@@ -252,6 +257,13 @@ function updateLedgerEntry(entry) {
     const ledger = Array.isArray(result?.ledger) ? result.ledger : [];
     chrome.storage.local.set({ ledger: [entry, ...ledger] });
   });
+}
+
+function categorizeVendor(vendor) {
+  const name = String(vendor || "").toLowerCase();
+  if (name.includes("uber") || name.includes("ubereats")) return "Food";
+  if (name.includes("amazon")) return "Shopping";
+  return "Shopping";
 }
 
 async function fetchNessieJson(path, apiKey, options = {}) {

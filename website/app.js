@@ -1,4 +1,4 @@
-const EXTENSION_ID = "pjofeihfkhcnmpkjecmafdneclakjngg"; // TODO: replace with the real extension id
+const EXTENSION_ID = "oifcpgkjdijdijbbbikjpdeehnflkand"; // TODO: replace with the real extension id
 
 const STATE_KEY = "nudgepay_dashboard_state";
 
@@ -266,14 +266,15 @@ function initExtensionUpdates() {
         renderNessieSummary(message.summary);
         persistState();
       }
-      const amount = Number(message.purchase?.amount || 0);
-      const vendor = message.purchase?.description || "Purchase";
+      const amount = Number(message.amount ?? message.purchase?.amount ?? 0);
+      const vendor = message.vendor || message.purchase?.description || "Purchase";
+      const category = message.category || "Shopping";
       const ledgerEntry = {
         id: `txn_${Date.now()}`,
         date: new Date().toISOString(),
         amount: Number(amount.toFixed(2)),
         vendor,
-        category: "Shopping",
+        category,
         type: "Variable",
         source: "extension",
         status: "confirmed",
