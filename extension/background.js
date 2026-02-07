@@ -1,10 +1,10 @@
 const MESSAGE_TYPE = "NUDGEPAY_SET_DATA";
 const NESSIE_CONFIG_KEY = "nessie_config";
 const NESSIE_BASE_URLS = [
-  "https://api.nessieisreal.com",
-  "https://api.reimaginebanking.com",
   "http://api.nessieisreal.com",
   "http://api.reimaginebanking.com",
+  "https://api.nessieisreal.com",
+  "https://api.reimaginebanking.com",
 ];
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
@@ -123,16 +123,19 @@ async function handleMessage(message, sendResponse) {
         method: "POST",
         body: JSON.stringify(buildDemoCustomer()),
       });
+      assertNessieId(customer, "customer");
 
       const account = await fetchNessieJson(`/customers/${customer._id}/accounts`, config.apiKey, {
         method: "POST",
         body: JSON.stringify(buildDemoAccount()),
       });
+      assertNessieId(account, "account");
 
       const merchant = await fetchNessieJson(`/merchants`, config.apiKey, {
         method: "POST",
         body: JSON.stringify(buildDemoMerchant()),
       });
+      assertNessieId(merchant, "merchant");
 
       const nextConfig = {
         ...config,
@@ -256,6 +259,12 @@ function sumLast30Days(items, dateKeys, amountKey) {
     const amount = Number(item?.[amountKey] || 0);
     return total + amount;
   }, 0);
+}
+
+function assertNessieId(entity, label) {
+  if (!entity || !entity._id) {
+    throw new Error(`Nessie ${label} creation failed: missing id`);
+  }
 }
 
 function buildDemoCustomer() {
