@@ -1,6 +1,17 @@
 const STATE_KEY = "nudgepay_dashboard_state";
 const SESSION_KEY = "nudgepay_session";
-const NESSIE_BASE_URLS = CONFIG.NESSIE_BASE_URLS;
+const LOCAL_CONFIG = typeof CONFIG === "undefined"
+  ? {
+      NESSIE_API_KEY: "",
+      NESSIE_BASE_URLS: [
+        "http://api.nessieisreal.com",
+        "http://api.reimaginebanking.com",
+        "https://api.nessieisreal.com",
+        "https://api.reimaginebanking.com",
+      ],
+    }
+  : CONFIG;
+const NESSIE_BASE_URLS = LOCAL_CONFIG.NESSIE_BASE_URLS;
 
 // If already logged in, go straight to dashboard
 const existingSession = localStorage.getItem(SESSION_KEY);
@@ -25,8 +36,8 @@ const els = {
 };
 
 // Pre-fill API key from config if set
-if (CONFIG.NESSIE_API_KEY) {
-  els.apiKey.value = CONFIG.NESSIE_API_KEY;
+if (LOCAL_CONFIG.NESSIE_API_KEY) {
+  els.apiKey.value = LOCAL_CONFIG.NESSIE_API_KEY;
 }
 
 els.loginForm.addEventListener("submit", async (e) => {
