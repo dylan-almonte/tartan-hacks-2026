@@ -13,7 +13,6 @@ All storage operations MUST conform exactly to this schema.
 {
   "user_profile": {
     "total_monthly_budget": 715.88,
-    "remaining_monthly_budget": 715.88,
     "currency": "USD",
     "last_synced": "2026-02-07T16:06:30.970Z",
     "last_nessie_summary": {
