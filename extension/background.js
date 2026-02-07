@@ -123,34 +123,34 @@ async function handleMessage(message, sendResponse) {
         method: "POST",
         body: JSON.stringify(buildDemoCustomer()),
       });
-      assertNessieId(customer, "customer");
+      const customerId = assertNessieId(customer, "customer");
 
-      const account = await fetchNessieJson(`/customers/${customer._id}/accounts`, config.apiKey, {
+      const account = await fetchNessieJson(`/customers/${customerId}/accounts`, config.apiKey, {
         method: "POST",
         body: JSON.stringify(buildDemoAccount()),
       });
-      assertNessieId(account, "account");
+      const accountId = assertNessieId(account, "account");
 
       const merchant = await fetchNessieJson(`/merchants`, config.apiKey, {
         method: "POST",
         body: JSON.stringify(buildDemoMerchant()),
       });
-      assertNessieId(merchant, "merchant");
+      const merchantId = assertNessieId(merchant, "merchant");
 
       const nextConfig = {
         ...config,
-        customerId: customer._id,
-        accountId: account._id,
-        merchantId: merchant._id,
+        customerId,
+        accountId,
+        merchantId,
       };
 
       chrome.storage.local.set({ [NESSIE_CONFIG_KEY]: nextConfig });
 
       sendResponse({
         ok: true,
-        customerId: customer._id,
-        accountId: account._id,
-        merchantId: merchant._id,
+        customerId,
+        accountId,
+        merchantId,
       });
     } catch (error) {
       sendResponse({ ok: false, error: error?.message || String(error) });
@@ -262,9 +262,12 @@ function sumLast30Days(items, dateKeys, amountKey) {
 }
 
 function assertNessieId(entity, label) {
-  if (!entity || !entity._id) {
-    throw new Error(`Nessie ${label} creation failed: missing id`);
+  const id = entity?._id || entity?.id || entity?.objectCreated?._id || entity?.objectCreated?.id;
+  if (!id) {
+    const detail = entity ? JSON.stringify(entity) : "empty response";
+    throw new Error(`Nessie ${label} creation failed: missing id (${detail})`);
   }
+  return id;
 }
 
 function buildDemoCustomer() {
