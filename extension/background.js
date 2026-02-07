@@ -100,17 +100,27 @@ async function handleMessage(message, sendResponse) {
         body: JSON.stringify(body),
       });
       let summary = await buildNessieSummary(config);
-      if (previousSummary && Number(summary.balance) === Number(previousSummary.balance)) {
+      if (previousSummary) {
         const spendDelta = Math.max(0, Number(summary.spendLast30 || 0) - Number(previousSummary.spendLast30 || 0));
-        const adjusted = spendDelta > 0 ? spendDelta : amount;
-        summary = {
-          ...summary,
-          balance: Number(Math.max(0, Number(summary.balance) - adjusted).toFixed(2)),
-        };
+        const expectedDrop = spendDelta > 0 ? spendDelta : amount;
+        const candidate = Number(Math.max(0, Number(previousSummary.balance || 0) - expectedDrop).toFixed(2));
+        if (Number(summary.balance) >= Number(previousSummary.balance || 0) || Number(summary.balance) > candidate) {
+          summary = { ...summary, balance: candidate };
+        }
       }
       chrome.storage.local.set({ nessie_summary: summary });
       updateUserProfileSummary(summary);
       updateRemainingBudget(amount);
+      updateLedgerEntry({
+        id: `txn_${Date.now()}`,
+        date: new Date().toISOString(),
+        amount: Number(amount.toFixed(2)),
+        vendor: message.payload?.vendor || "Checkout",
+        category: "Shopping",
+        type: "Variable",
+        source: "extension",
+        status: "confirmed",
+      });
       await broadcastToWebsite({
         type: "NUDGEPAY_NESSIE_PURCHASE",
         purchase: response,
@@ -234,6 +244,13 @@ function updateRemainingBudget(amount) {
       remaining_monthly_budget: Number(next.toFixed(2)),
     };
     chrome.storage.local.set({ user_profile: nextProfile });
+  });
+}
+
+function updateLedgerEntry(entry) {
+  chrome.storage.local.get(["ledger"], (result) => {
+    const ledger = Array.isArray(result?.ledger) ? result.ledger : [];
+    chrome.storage.local.set({ ledger: [entry, ...ledger] });
   });
 }
 

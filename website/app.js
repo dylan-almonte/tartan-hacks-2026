@@ -268,12 +268,25 @@ function initExtensionUpdates() {
       }
       const amount = Number(message.purchase?.amount || 0);
       const vendor = message.purchase?.description || "Purchase";
+      const ledgerEntry = {
+        id: `txn_${Date.now()}`,
+        date: new Date().toISOString(),
+        amount: Number(amount.toFixed(2)),
+        vendor,
+        category: "Shopping",
+        type: "Variable",
+        source: "extension",
+        status: "confirmed",
+      };
+      state.ledger = [ledgerEntry, ...(state.ledger || [])];
       if (state.user_profile.remaining_monthly_budget !== undefined) {
         const nextRemaining = Math.max(0, Number(state.user_profile.remaining_monthly_budget || 0) - amount);
         state.user_profile.remaining_monthly_budget = Number(nextRemaining.toFixed(2));
         persistState();
         renderState();
       }
+      persistState();
+      renderState();
       setStatus(`Nessie updated: ${vendor} $${amount.toFixed(2)}`, true);
       return;
     }
