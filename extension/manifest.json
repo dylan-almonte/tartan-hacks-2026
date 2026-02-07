@@ -1,0 +1,43 @@
+{
+  "manifest_version": 3,
+  "name": "NudgePay Extension",
+  "version": "0.1.0",
+  "description": "Receives dashboard sync payloads and stores them in chrome.storage.local.",
+  "permissions": ["storage", "tabs"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_title": "NudgePay",
+    "default_popup": "popup.html"
+  },
+  "host_permissions": [
+    "https://www.amazon.com/*",
+    "https://*.amazon.com/*",
+    "https://www.ubereats.com/*",
+    "https://api.nessieisreal.com/*",
+    "https://api.reimaginebanking.com/*",
+    "http://api.nessieisreal.com/*",
+    "http://api.reimaginebanking.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.amazon.com/checkout/*", "https://*.amazon.com/checkout/*"],
+      "js": ["amazon.js"]
+    },
+    {
+      "matches": ["https://www.ubereats.com/checkout*"],
+      "js": ["ubereats.js"]
+    },
+    {
+      "matches": ["http://localhost/*", "http://127.0.0.1/*"],
+      "js": ["bridge.js"]
+    }
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost/*",
+      "http://127.0.0.1/*"
+    ]
+  }
+}

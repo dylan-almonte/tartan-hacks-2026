@@ -7,14 +7,38 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div class="mosaic-backdrop" aria-hidden="true">
+      <div class="liquid-grid"></div>
+      <div class="shard-layer" id="shardLayer"></div>
+      <div class="bubble-layer" id="bubbleLayer"></div>
+    </div>
     <div class="page">
       <header class="hero">
-        <div>
+        <div class="hero-copy">
           <p class="eyebrow">NudgePay: Final Word</p>
           <h1>Fun Money Dashboard</h1>
           <p class="subtitle">Set your monthly budget and recurring payments. Syncs to your extension when ready.</p>
         </div>
-        <div class="status" id="syncStatus">Not synced</div>
+        <div class="hero-side">
+          <a href="analytics.html" class="nav-link">View Analytics</a>
+          <div class="status" id="syncStatus">Not synced</div>
+          <div class="mosaic-panel" aria-hidden="true">
+            <div class="mosaic-tiles">
+              <span class="tile t1"></span>
+              <span class="tile t2"></span>
+              <span class="tile t3"></span>
+              <span class="tile t4"></span>
+              <span class="tile t5"></span>
+              <span class="tile t6"></span>
+              <span class="tile t2"></span>
+              <span class="tile t3"></span>
+              <span class="tile t4"></span>
+              <span class="tile t5"></span>
+              <span class="tile t6"></span>
+              <span class="tile t1"></span>
+            </div>
+          </div>
+        </div>
       </header>
 
       <main class="grid">
@@ -35,6 +59,7 @@
             </label>
             <button type="submit" class="primary">Save Budget</button>
           </form>
+          <p class="muted">Remaining this month: <strong id="budgetRemaining">$0.00</strong></p>
         </section>
 
         <section class="card">
@@ -79,13 +104,44 @@
           <div class="list" id="paymentsList"></div>
         </section>
 
+        <section class="card">
+          <h2>Nessie Budget Builder</h2>
+          <p class="muted">Connect your Nessie account to suggest a monthly online purchase budget.</p>
+          <form id="nessieForm" class="form">
+            <label>
+              Nessie API key
+              <input type="password" id="nessieApiKey" placeholder="Paste Nessie API key" />
+            </label>
+            <label>
+              Account ID
+              <input type="text" id="nessieAccountId" placeholder="Account ID" />
+            </label>
+            <label>
+              Monthly savings target
+              <input type="number" id="nessieSavings" min="0" step="0.01" placeholder="200.00" />
+            </label>
+            <label>
+              Online shopping allocation (%)
+              <input type="number" id="nessieAllocation" min="0" max="100" step="1" placeholder="30" />
+            </label>
+            <div class="form-row">
+              <button type="button" id="nessieConnect" class="secondary">Save Nessie config</button>
+              <button type="button" id="nessieFetch" class="primary">Fetch Nessie summary</button>
+            </div>
+          </form>
+          <div class="list" id="nessieSummary"></div>
+          <button type="button" id="nessieApplyBudget" class="primary">Apply suggested budget</button>
+        </section>
+
         <section class="card full">
           <h2>Sync</h2>
           <p class="muted">This sends the canonical schema to the extension so it can store data in <strong>chrome.storage.local</strong>.</p>
           <div class="actions">
             <button id="syncButton" class="primary">Send to Extension</button>
             <button id="resetButton" class="secondary">Reset Local Draft</button>
+            <button id="nessieCreateDemo" class="secondary">Create Nessie demo account</button>
           </div>
+          <p class="muted" id="nessieDemoStatus"></p>
           <pre id="payloadPreview" class="payload"></pre>
         </section>
       </main>

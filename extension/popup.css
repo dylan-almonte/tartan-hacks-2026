@@ -1,0 +1,99 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f9f7;
+  --card: #ffffff;
+  --text: #0d2320;
+  --muted: #4e6e67;
+  --primary: #2e8f7f;
+  --accent: #2f7abf;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  min-width: 320px;
+}
+
+.card {
+  padding: 16px;
+  background: var(--card);
+  box-shadow: 0 12px 24px rgba(14, 36, 32, 0.08);
+  border-radius: 16px;
+  margin: 12px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  color: var(--accent);
+  margin: 0;
+}
+
+h1 {
+  margin: 6px 0 0;
+  font-size: 1.2rem;
+}
+
+.badge {
+  background: rgba(47, 122, 191, 0.12);
+  color: var(--accent);
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.summary {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.label {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+h2 {
+  margin: 4px 0 0;
+  font-size: 1.1rem;
+}
+
+.status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+button.primary {
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+
+button.primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

@@ -1,0 +1,12 @@
+NudgePay Extension
+
+Load this folder as an unpacked extension (Chrome > Extensions > Developer mode).
+
+Setup steps
+1) Update the website extension id in website/app.js.
+2) If you change the website URL, update externally_connectable in manifest.json.
+3) Click "Send to Extension" in the dashboard to store the schema in chrome.storage.local.
+
+Popup UI
+- Open the extension popup while on Amazon or Uber Eats checkout pages.
+- The popup reads the detected order total and compares it to the stored budget.
