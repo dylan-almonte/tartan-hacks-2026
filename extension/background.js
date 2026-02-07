@@ -86,6 +86,7 @@ async function handleMessage(message, sendResponse) {
     }
 
     try {
+      const previousSummary = await getStoredSummary();
       const body = {
         merchant_id: config.merchantId,
         medium: "balance",
@@ -96,7 +97,13 @@ async function handleMessage(message, sendResponse) {
         method: "POST",
         body: JSON.stringify(body),
       });
-      const summary = await buildNessieSummary(config);
+      let summary = await buildNessieSummary(config);
+      if (previousSummary && Number(summary.balance) === Number(previousSummary.balance)) {
+        summary = {
+          ...summary,
+          balance: Number(Math.max(0, Number(summary.balance) - amount).toFixed(2)),
+        };
+      }
       chrome.storage.local.set({ nessie_summary: summary });
       await broadcastToWebsite({
         type: "NUDGEPAY_NESSIE_PURCHASE",
@@ -188,6 +195,14 @@ function getNessieConfig() {
   return new Promise((resolve) => {
     chrome.storage.local.get([NESSIE_CONFIG_KEY], (result) => {
       resolve(result?.[NESSIE_CONFIG_KEY] || {});
+    });
+  });
+}
+
+function getStoredSummary() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["nessie_summary"], (result) => {
+      resolve(result?.nessie_summary || null);
     });
   });
 }
