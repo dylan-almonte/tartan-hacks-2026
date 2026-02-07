@@ -16,7 +16,9 @@
     "https://*.amazon.com/*",
     "https://www.ubereats.com/*",
     "https://api.nessieisreal.com/*",
-    "https://api.reimaginebanking.com/*"
+    "https://api.reimaginebanking.com/*",
+    "http://api.nessieisreal.com/*",
+    "http://api.reimaginebanking.com/*"
   ],
   "content_scripts": [
     {

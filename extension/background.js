@@ -1,6 +1,11 @@
 const MESSAGE_TYPE = "NUDGEPAY_SET_DATA";
 const NESSIE_CONFIG_KEY = "nessie_config";
-const NESSIE_BASE_URLS = ["https://api.nessieisreal.com", "https://api.reimaginebanking.com"];
+const NESSIE_BASE_URLS = [
+  "https://api.nessieisreal.com",
+  "https://api.reimaginebanking.com",
+  "http://api.nessieisreal.com",
+  "http://api.reimaginebanking.com",
+];
 
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   handleMessage(message, sendResponse);
