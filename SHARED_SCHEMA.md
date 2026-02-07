@@ -12,40 +12,39 @@ All storage operations MUST conform exactly to this schema.
 ```json
 {
   "user_profile": {
-    "total_monthly_budget": 1200.00,
+    "total_monthly_budget": 715.88,
     "currency": "USD",
-    "last_synced": "2026-02-06T16:25:00Z"
-  },
-
-  "ledger": [
-    {
-      "id": "txn_20260201_amazon",
-      "date": "2026-02-01T14:30:00Z",
-      "amount": 45.50,
-      "vendor": "Amazon",
-      "category": "Shopping",
-      "type": "Variable",
-      "source": "email | scraper | manual",
-      "status": "confirmed"
+    "last_synced": "2026-02-07T16:06:30.970Z",
+    "last_nessie_summary": {
+      "balance": 2386.25,
+      "accountName": "NudgePay Checking",
+      "accountType": "Checking",
+      "incomeLast30": 0,
+      "spendLast30": 0
     }
-  ],
-
+  },
+  "ledger": [],
   "recurring_payments": [
     {
-      "id": "rec_netflix",
-      "vendor": "Netflix",
-      "amount": 15.99,
-      "category": "Entertainment",
+      "id": "rec_1770418611938",
+      "vendor": "Random",
+      "amount": 16,
+      "category": "Ent",
       "frequency": "monthly",
-      "billing_day": 12,
+      "billing_day": 30,
       "type": "Fixed",
       "active": true,
-      "last_generated": "2026-01-12T00:00:00Z"
+      "last_generated": "2026-02-06T22:56:51.938Z"
     }
   ],
-
   "categories": {
-    "system": ["Food", "Shopping", "Bills", "Entertainment", "Transport"],
+    "system": [
+      "Food",
+      "Shopping",
+      "Bills",
+      "Entertainment",
+      "Transport"
+    ],
     "user": []
   }
 }

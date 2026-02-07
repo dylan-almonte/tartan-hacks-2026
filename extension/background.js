@@ -64,6 +64,7 @@ async function handleMessage(message, sendResponse) {
     try {
       const summary = await buildNessieSummary(config);
       chrome.storage.local.set({ nessie_summary: summary });
+      updateUserProfileSummary(summary);
       sendResponse({ ok: true, summary });
     } catch (error) {
       sendResponse({ ok: false, error: error?.message || String(error) });
@@ -105,6 +106,7 @@ async function handleMessage(message, sendResponse) {
         };
       }
       chrome.storage.local.set({ nessie_summary: summary });
+      updateUserProfileSummary(summary);
       await broadcastToWebsite({
         type: "NUDGEPAY_NESSIE_PURCHASE",
         purchase: response,
@@ -204,6 +206,17 @@ function getStoredSummary() {
     chrome.storage.local.get(["nessie_summary"], (result) => {
       resolve(result?.nessie_summary || null);
     });
+  });
+}
+
+function updateUserProfileSummary(summary) {
+  chrome.storage.local.get(["user_profile"], (result) => {
+    if (!result?.user_profile) return;
+    const nextProfile = {
+      ...result.user_profile,
+      last_nessie_summary: summary,
+    };
+    chrome.storage.local.set({ user_profile: nextProfile });
   });
 }
 
