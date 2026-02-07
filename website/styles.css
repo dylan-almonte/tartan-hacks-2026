@@ -9,6 +9,9 @@
   --accent: #2f7abf;
   --border: #dce8e3;
   --success: #2a9d6f;
+  --liquid-x: 50%;
+  --liquid-y: 50%;
+  --liquid-softness: 320px;
 }
 
 * {
@@ -27,14 +30,177 @@ body {
 .mosaic-backdrop {
   position: fixed;
   inset: 0;
-  background-color: var(--bg);
+  background: radial-gradient(circle at var(--liquid-x) var(--liquid-y), rgba(255, 255, 255, 0.95), rgba(246, 250, 249, 0.98) 55%, rgba(240, 247, 246, 1) 100%);
+  z-index: -2;
+  overflow: hidden;
+}
+
+.mosaic-backdrop::before,
+.mosaic-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
   background-image:
-    linear-gradient(135deg, rgba(46, 143, 127, 0.18), rgba(46, 143, 127, 0) 55%),
-    linear-gradient(45deg, rgba(47, 122, 191, 0.2), rgba(47, 122, 191, 0) 55%),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 64px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.5) 0 1px, transparent 1px 64px);
-  background-size: cover, cover, 64px 64px, 64px 64px;
-  z-index: -1;
+    radial-gradient(circle at 20% 30%, rgba(46, 143, 127, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 20%, rgba(47, 122, 191, 0.18), transparent 55%),
+    radial-gradient(circle at 65% 70%, rgba(46, 143, 127, 0.12), transparent 60%),
+    radial-gradient(circle at 30% 75%, rgba(47, 122, 191, 0.14), transparent 60%);
+  filter: blur(24px);
+  opacity: 0.7;
+  transform: translate3d(0, 0, 0);
+  animation: liquid-drift 18s ease-in-out infinite alternate;
+}
+
+.mosaic-backdrop::after {
+  background-image:
+    radial-gradient(circle at 25% 40%, rgba(255, 255, 255, 0.5), transparent 50%),
+    radial-gradient(circle at 75% 65%, rgba(255, 255, 255, 0.45), transparent 50%),
+    radial-gradient(circle at 55% 35%, rgba(46, 143, 127, 0.15), transparent 55%),
+    radial-gradient(circle at 45% 80%, rgba(47, 122, 191, 0.15), transparent 55%);
+  mix-blend-mode: screen;
+  animation: liquid-drift 24s ease-in-out infinite alternate-reverse;
+}
+
+
+.mosaic-backdrop .liquid-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0 1px, transparent 1px 80px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.35) 0 1px, transparent 1px 80px);
+  opacity: 0.35;
+  mask-image: radial-gradient(circle at var(--liquid-x) var(--liquid-y), rgba(0, 0, 0, 0.9), transparent 70%);
+  pointer-events: none;
+}
+
+.shard-layer,
+.bubble-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.shard {
+  position: absolute;
+  width: var(--size, 120px);
+  height: var(--size, 120px);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.72), var(--shard-tint, rgba(196, 234, 227, 0.5)), var(--shard-tint-2, rgba(168, 210, 252, 0.55))),
+    linear-gradient(220deg, var(--shard-tint-3, rgba(235, 250, 246, 0.45)), rgba(255, 255, 255, 0.35));
+  border: 1px solid var(--shard-border, rgba(47, 122, 191, 0.18));
+  border-radius: 24px;
+  box-shadow:
+    inset 0 0 22px rgba(255, 255, 255, 0.7),
+    inset 0 0 40px rgba(255, 255, 255, 0.25),
+    0 20px 48px rgba(14, 36, 32, 0.14),
+    0 30px 80px rgba(14, 36, 32, 0.1);
+  backdrop-filter: blur(6px);
+  opacity: 0.8;
+  transform: translate3d(var(--x, 0px), var(--y, 0px), 0) rotate(var(--rotate, 0deg)) perspective(800px) rotateX(var(--tilt-x, -6deg)) rotateY(var(--tilt-y, 8deg));
+  filter: hue-rotate(var(--hue, 0deg)) saturate(1.1);
+  transition: box-shadow 0.4s ease;
+  clip-path: polygon(8% 0%, 92% 0%, 100% 12%, 100% 88%, 92% 100%, 8% 100%, 0% 88%, 0% 12%);
+}
+
+.shard::after {
+  content: "";
+  position: absolute;
+  inset: 12%;
+  border-radius: 18px;
+  background: linear-gradient(120deg, rgba(47, 122, 191, 0.24), rgba(46, 143, 127, 0.2), rgba(255, 255, 255, 0.4));
+  opacity: 0.7;
+  clip-path: inherit;
+}
+
+.shard::before {
+  content: "";
+  position: absolute;
+  inset: 6% 10% 18% 6%;
+  border-radius: 22px;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.05));
+  opacity: 0.7;
+  mix-blend-mode: screen;
+  clip-path: inherit;
+  transform: translateZ(1px);
+}
+
+.shard::after {
+  box-shadow:
+    0 0 18px rgba(255, 255, 255, 0.25),
+    0 0 32px rgba(255, 255, 255, 0.18);
+}
+
+.shard .prism {
+  position: absolute;
+  inset: -10%;
+  background: linear-gradient(120deg,
+      rgba(255, 0, 128, 0.22) 0%,
+      rgba(255, 152, 0, 0.18) 18%,
+      rgba(255, 235, 59, 0.14) 34%,
+      rgba(76, 175, 80, 0.16) 50%,
+      rgba(33, 150, 243, 0.2) 68%,
+      rgba(156, 39, 176, 0.18) 86%,
+      rgba(255, 0, 128, 0.2) 100%);
+  mix-blend-mode: screen;
+  opacity: 0.55;
+  clip-path: inherit;
+  border-radius: inherit;
+  transform: translateZ(1px);
+}
+
+.shard.rhombus {
+  border-radius: 18px;
+  clip-path: polygon(50% 0%, 100% 45%, 50% 100%, 0% 55%);
+}
+
+.shard.kite {
+  border-radius: 20px;
+  clip-path: polygon(50% 0%, 92% 38%, 72% 100%, 28% 100%, 8% 38%);
+}
+
+.shard.sliver {
+  border-radius: 14px;
+  clip-path: polygon(20% 0%, 100% 22%, 80% 100%, 0% 78%);
+}
+
+.shard.blade {
+  border-radius: 12px;
+  clip-path: polygon(10% 0%, 100% 35%, 90% 100%, 0% 65%);
+}
+
+.bubble {
+  position: absolute;
+  width: var(--bubble-size, 14px);
+  height: var(--bubble-size, 14px);
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.2));
+  border: 1px solid rgba(47, 122, 191, 0.35);
+  opacity: 0.7;
+  transform: translate(-50%, -50%);
+  animation: bubble-float 1.8s ease-out forwards;
+}
+
+@keyframes bubble-float {
+  0% {
+    transform: translate(-50%, -50%) scale(0.6);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -80%) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes liquid-drift {
+  0% {
+    transform: translate3d(-2%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, 1%, 0) scale(1.04);
+  }
+  100% {
+    transform: translate3d(-1%, 2%, 0) scale(1.02);
+  }
 }
 
 .page {
