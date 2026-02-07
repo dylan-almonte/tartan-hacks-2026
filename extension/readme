@@ -1,12 +1,22 @@
-NudgePay Extension
+# NudgePay Extension
 
-Load this folder as an unpacked extension (Chrome > Extensions > Developer mode).
+Chrome extension that monitors checkout pages on Amazon and Uber Eats and compares your cart total against your budget.
 
-Setup steps
-1) Update the website extension id in website/app.js.
-2) If you change the website URL, update externally_connectable in manifest.json.
-3) Click "Send to Extension" in the dashboard to store the schema in chrome.storage.local.
+## Installation
 
-Popup UI
-- Open the extension popup while on Amazon or Uber Eats checkout pages.
-- The popup reads the detected order total and compares it to the stored budget.
+1. Open `chrome://extensions/` in Chrome
+2. Enable **Developer mode** (top-right toggle)
+3. Click **Load unpacked** and select this `extension/` folder
+4. Copy the assigned **Extension ID** into `website/config.js` as the `EXTENSION_ID` value
+
+## How it works
+
+- **Content scripts** (`amazon.js`, `ubereats.js`) detect order totals on checkout pages
+- **Service worker** (`background.js`) stores budget data and communicates with the Nessie API
+- **Popup** (`popup.html`) shows your detected cart total vs. remaining budget
+
+## Connecting to the dashboard
+
+1. Start the website dashboard and log in
+2. Click **"Send to Extension"** on the dashboard to sync your budget data
+3. If you change the dashboard URL from `localhost`, update `externally_connectable` in `manifest.json`

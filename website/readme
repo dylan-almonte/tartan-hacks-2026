@@ -1,14 +1,28 @@
-NudgePay Dashboard
+# NudgePay Dashboard
 
-Open index.html in a browser to set the monthly budget and recurring payments.
-Use the "Send to Extension" button to post the canonical schema to the Chrome
-extension via chrome.runtime.sendMessage.
+The web dashboard for managing budgets, recurring payments, and viewing spending analytics.
 
-TODO: Replace TODO_EXTENSION_ID in app.js with the real extension id.
+## Pages
 
-Local dev
-1) cd website
-2) npm install
-3) npm run dev
+- **login.html** — Log in with a Nessie API key or create a demo account
+- **index.html** — Set monthly budget, manage recurring payments, sync to extension
+- **analytics.html** — Charts and transaction history with AI-powered summaries (Gemini)
 
-This starts a local server at http://localhost:5173.
+## Configuration
+
+Copy `config.example.js` to `config.js` and fill in your API keys:
+
+```bash
+cp config.example.js config.js
+```
+
+See the root README for details on each config field.
+
+## Running locally
+
+```bash
+npm install
+npm run dev
+```
+
+Opens a dev server at http://localhost:5173.
