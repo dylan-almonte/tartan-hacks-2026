@@ -86,6 +86,7 @@ els.clearFilters.addEventListener("click", () => {
 
 els.generateDemo.addEventListener("click", () => {
   generateDemoTransactions();
+  updateRemainingBudget();
   persistState();
   populateCategoryFilter();
   renderAll();
@@ -94,6 +95,7 @@ els.generateDemo.addEventListener("click", () => {
 
 els.clearLedger.addEventListener("click", () => {
   state.ledger = [];
+  updateRemainingBudget();
   persistState();
   renderAll();
   els.demoStatus.textContent = "Ledger cleared.";
@@ -556,6 +558,39 @@ function generateDemoTransactions() {
   }
 
   state.ledger = entries;
+}
+
+function updateRemainingBudget() {
+  const totalBudget = Number(state.user_profile.total_monthly_budget || 0);
+  if (!totalBudget) return;
+  const recurringTotal = getRecurringMonthlyTotal(state.recurring_payments || []);
+  const ledgerTotal = getCurrentMonthLedgerTotal(state.ledger || []);
+  state.user_profile.remaining_monthly_budget = Number((totalBudget - recurringTotal - ledgerTotal).toFixed(2));
+}
+
+function getRecurringMonthlyTotal(recurring) {
+  return recurring.reduce((sum, item) => {
+    if (item.active === false) return sum;
+    const amount = Number(item.amount || 0);
+    switch (item.frequency) {
+      case "weekly":
+        return sum + amount * 4;
+      case "yearly":
+        return sum + amount / 12;
+      case "monthly":
+      default:
+        return sum + amount;
+    }
+  }, 0);
+}
+
+function getCurrentMonthLedgerTotal(ledger) {
+  const now = new Date();
+  const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  return ledger.reduce((sum, item) => {
+    if (!item?.date || item.date.slice(0, 7) !== ym) return sum;
+    return sum + Number(item.amount || 0);
+  }, 0);
 }
 
 /* ── liquid background (same as app.js) ── */

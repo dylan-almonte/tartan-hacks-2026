@@ -259,6 +259,57 @@ body {
   color: var(--text);
 }
 
+
+.builder-action,
+#nessieApplyBudget {
+  margin-top: 16px;
+  display: block;
+}
+
+.budget-positive {
+  color: var(--success) !important;
+}
+
+.budget-negative {
+  color: #cc2f2f !important;
+}
+
+.account-summary {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.6fr);
+  gap: 24px;
+  padding: 18px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(46, 143, 127, 0.18);
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 14px 28px rgba(14, 36, 32, 0.08);
+  margin: 0 0 28px;
+  align-items: center;
+}
+
+.account-summary-main {
+  display: grid;
+  gap: 6px;
+  font-size: 0.95rem;
+}
+
+.account-summary-main strong {
+  font-size: 1.1rem;
+}
+
+.account-summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+}
+
+.account-summary-metrics strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
 .hero-copy {
   max-width: 520px;
 }

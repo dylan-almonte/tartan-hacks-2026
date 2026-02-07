@@ -9,7 +9,13 @@
   },
   "action": {
     "default_title": "NudgePay",
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+      "128": "icons/icon.svg"
+    }
+  },
+  "icons": {
+    "128": "icons/icon.svg"
   },
   "host_permissions": [
     "https://www.amazon.com/*",

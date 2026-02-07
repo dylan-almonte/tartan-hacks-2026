@@ -80,6 +80,11 @@ h2 {
   font-size: 0.85rem;
 }
 
+.status.warn {
+  color: #cc2f2f;
+  font-weight: 600;
+}
+
 button.primary {
   width: 100%;
   border: none;

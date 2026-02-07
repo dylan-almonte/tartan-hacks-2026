@@ -33,7 +33,11 @@ async function init() {
   els.predictedBalance.textContent = formatMoney(predicted);
   els.checkoutButton.disabled = false;
   els.checkoutButton.addEventListener("click", () => simulateCheckout(total, response.vendor));
-  setStatus("Prediction ready. Proceed with caution.");
+  if (predicted < 0) {
+    setStatus(`Over budget by ${formatMoney(Math.abs(predicted))}.`, true);
+  } else {
+    setStatus("Prediction ready. Proceed with caution.");
+  }
 }
 
 function sendMessageToTab(tabId, message) {
@@ -106,8 +110,9 @@ function simulateCheckout(amount, vendor) {
   );
 }
 
-function setStatus(message) {
+function setStatus(message, isWarn = false) {
   els.statusMessage.textContent = message;
+  els.statusMessage.classList.toggle("warn", Boolean(isWarn));
 }
 
 function formatMoney(value) {
